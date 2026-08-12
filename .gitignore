@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+.vite/
+.env
+*.log
+# Local secrets
+frontend/.env.local
+backend/google_client_secret.json
