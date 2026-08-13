@@ -459,14 +459,14 @@
       </div>
     </Transition>
 
-    <!-- === CHAT MODAL === -->
+    <!-- === FLOATING CHAT === -->
     <Transition name="fade">
       <div v-if="showChat" class="drawer-backdrop" @click.self="closeChat">
         <aside
-          class="chat-drawer"
+          class="chat-drawer floating-chat"
           @click.stop
           role="dialog"
-          aria-labelledby="chat-title"
+          aria-label="Chat do produto"
         >
           <button
             type="button"
@@ -476,54 +476,18 @@
           >
             ✕
           </button>
-          <div class="chat-header">
-            <div>
-              <h2 id="chat-title">💬 Chat em tempo real com o vendedor</h2>
-              <p class="chat-subtitle">
-                Troca instantânea de mensagens com o fornecedor do produto.
-              </p>
-            </div>
-          </div>
-          <div class="chat-body">
-            <div class="chat-product-card">
-              <strong>{{ activeChatProduct?.name }}</strong>
-              <span>{{ activeChatProduct?.supplier }}</span>
-              <span>{{ getProductOwnerStatus(activeChatProduct) }}</span>
-            </div>
-            <div class="chat-messages">
-              <template v-if="chatLoading">
-                <div class="chat-loading">Carregando mensagens...</div>
-              </template>
-              <template v-else>
-                <div v-if="!chatMessages.length" class="chat-empty">
-                  Seja o primeiro a enviar uma mensagem.
-                </div>
-                <div
-                  v-for="message in chatMessages"
-                  :key="message.id"
-                  class="chat-message"
-                >
-                  <span class="chat-sender">{{ message.senderName }}:</span>
-                  <span class="chat-text">{{ message.text }}</span>
-                </div>
-              </template>
-            </div>
-            <div class="chat-input-row">
-              <input
-                v-model="chatInput"
-                type="text"
-                placeholder="Escreva uma mensagem..."
-                @keydown.enter.prevent="sendChatMessage"
-              />
-              <button
-                class="btn-primary"
-                type="button"
-                @click="sendChatMessage"
-              >
-                Enviar
-              </button>
-            </div>
-          </div>
+          <ChatView
+            :seller-id="
+              activeChatProduct?.ownerId ||
+              activeChatProduct?.owner_id ||
+              activeChatProduct?.seller_id
+            "
+            :listing-id="activeChatProduct?.id"
+            :seller-name="activeChatProduct?.supplier || 'vendedor'"
+            :listing-title="activeChatProduct?.name"
+            :listing-category="activeChatProduct?.category"
+            :listing-price="activeChatProduct?.price"
+          />
         </aside>
       </div>
     </Transition>
@@ -666,6 +630,7 @@
   import { auth, db } from '../firebase.js'
   import AuthForm from './shared/AuthForm.vue'
   import ProductForm from './shared/ProductForm.vue'
+  import ChatView from './user/ChatView.vue'
   import api, { initApi } from '../utils/api.js'
 
   const router = useRouter()
@@ -705,6 +670,7 @@
   const selectedProduct = ref(null)
   const editingProduct = ref(null)
   const activeChatProduct = ref(null)
+  const showChat = ref(false)
 
   // Toast
   const toastMessage = ref('')
@@ -1139,17 +1105,13 @@
       return
     }
 
-    router.push({
-      name: 'chat',
-      query: {
-        seller_id: sellerId,
-        listing_id: product.id,
-        seller_name: product.supplier || 'vendedor',
-        listing_title: product.name,
-        listing_category: product.category,
-        listing_price: product.price,
-      },
-    })
+    activeChatProduct.value = { ...product }
+    showChat.value = true
+  }
+
+  const closeChat = () => {
+    showChat.value = false
+    activeChatProduct.value = null
   }
 
   const setSelectedCategory = (category) => {
@@ -1668,6 +1630,22 @@
     gap: 16px;
   }
 
+  .floating-chat {
+    width: min(860px, calc(100vw - 32px));
+    height: min(720px, calc(100dvh - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: 12px;
+  }
+
+  .floating-chat :deep(.chat-container) {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    min-height: 0;
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
   .chat-header {
     display: flex;
     flex-direction: column;
@@ -1687,6 +1665,22 @@
     gap: 16px;
     flex: 1;
     overflow: hidden;
+  }
+
+  @media (max-width: 600px) {
+    .floating-chat {
+      width: 100vw;
+      height: 100dvh;
+      max-height: 100dvh;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    .floating-chat .drawer-close {
+      z-index: 2;
+      top: 8px;
+      right: 8px;
+    }
   }
 
   .chat-product-card {

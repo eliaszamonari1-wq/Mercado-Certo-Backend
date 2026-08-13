@@ -71,6 +71,14 @@
   import { auth, db } from '../../firebase.js'
 
   const route = useRoute()
+  const props = defineProps({
+    sellerId: { type: String, default: '' },
+    listingId: { type: [String, Number], default: '' },
+    sellerName: { type: String, default: '' },
+    listingTitle: { type: String, default: '' },
+    listingCategory: { type: String, default: '' },
+    listingPrice: { type: [String, Number], default: null },
+  })
   const messageContent = ref('')
   const messages = ref([])
   const messagesContainer = ref(null)
@@ -155,8 +163,8 @@
   }
 
   const startConversation = async () => {
-    const sellerId = String(route.query.seller_id || '')
-    const listingId = String(route.query.listing_id || '')
+    const sellerId = String(props.sellerId || route.query.seller_id || '')
+    const listingId = String(props.listingId || route.query.listing_id || '')
 
     if (!currentUserId.value || !sellerId || !listingId) {
       errorMessage.value = 'É necessário estar logado e informar o anúncio.'
@@ -167,15 +175,17 @@
     conversationId.value = `${listingId}_${participantIds.join('_')}`
     otherUser.value = {
       id: sellerId,
-      name: route.query.seller_name || 'vendedor',
+      name: props.sellerName || route.query.seller_name || 'vendedor',
     }
-    listing.value = route.query.listing_title
-      ? {
-          title: route.query.listing_title,
-          category: route.query.listing_category,
-          price: route.query.listing_price,
-        }
-      : null
+    listing.value =
+      props.listingTitle || route.query.listing_title
+        ? {
+            id: listingId,
+            title: props.listingTitle || route.query.listing_title,
+            category: props.listingCategory || route.query.listing_category,
+            price: props.listingPrice || route.query.listing_price,
+          }
+        : null
 
     await setDoc(
       doc(db, 'conversations', conversationId.value),
