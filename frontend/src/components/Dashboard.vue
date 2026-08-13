@@ -137,12 +137,77 @@
               </div>
             </article>
           </div>
-          <p v-else class="cart-empty">Seu carrinho está vazio.</p>
-          <div v-if="cartItems.length" class="cart-summary">
-            <strong>Total: R$ {{ formatCurrency(cartTotal) }}</strong>
-            <button type="button" class="btn-buy" @click="checkoutCart">
-              Finalizar compra de teste
+          <div v-else class="cart-empty">
+            <strong>Seu carrinho está vazio.</strong>
+            <span>Veja uma prévia do checkout sem criar pedido real.</span>
+            <button type="button" class="btn-secondary" @click="loadDemoCart">
+              Ver exemplo de checkout
             </button>
+          </div>
+          <div
+            v-if="cartItems.length && !showCheckoutForm"
+            class="cart-summary"
+          >
+            <div class="cart-summary-line">
+              <span>Subtotal</span
+              ><strong>R$ {{ formatCurrency(cartTotal) }}</strong>
+            </div>
+            <div class="cart-summary-line muted">
+              <span>Pagamento</span><span>Somente teste</span>
+            </div>
+            <button
+              type="button"
+              class="btn-buy"
+              @click="showCheckoutForm = true"
+            >
+              Continuar para finalizar
+            </button>
+          </div>
+          <form
+            v-if="cartItems.length && showCheckoutForm"
+            class="checkout-form"
+            @submit.prevent="checkoutCart"
+          >
+            <div class="checkout-heading">
+              <strong>Finalizar compra</strong
+              ><span>Sem cobrança nesta versão</span>
+            </div>
+            <label
+              >Nome para contato<input
+                v-model="checkoutName"
+                required
+                placeholder="Seu nome"
+            /></label>
+            <label
+              >WhatsApp ou e-mail<input
+                v-model="checkoutContact"
+                required
+                placeholder="Contato para o vendedor"
+            /></label>
+            <label
+              >Entrega ou retirada<textarea
+                v-model="checkoutAddress"
+                required
+                placeholder="Ex.: Retirada no local"
+              ></textarea>
+            </label>
+            <div class="checkout-total">
+              <span>Total do pedido</span
+              ><strong>R$ {{ formatCurrency(cartTotal) }}</strong>
+            </div>
+            <button type="submit" class="btn-buy">
+              Confirmar compra de teste
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              @click="showCheckoutForm = false"
+            >
+              Voltar ao carrinho
+            </button>
+          </form>
+          <div v-if="cartItems.some((item) => item.demo)" class="demo-note">
+            Exemplo visual: este item não será enviado ao vendedor.
           </div>
         </aside>
       </div>
@@ -716,6 +781,10 @@
   const notifications = ref([])
   const cartItems = ref([])
   const showCart = ref(false)
+  const showCheckoutForm = ref(false)
+  const checkoutName = ref('')
+  const checkoutContact = ref('')
+  const checkoutAddress = ref('')
   const lastUpdated = ref(null)
   let refreshTimer = null
   let searchTimeout = null
@@ -1290,9 +1359,24 @@
     cartItems.value = cartItems.value.filter((item) => item.id !== productId)
   }
 
+  const loadDemoCart = () => {
+    cartItems.value = [
+      {
+        id: 'demo-cart-item',
+        name: 'Notebook demonstrativo',
+        price: 2500,
+        quantity: 1,
+        stock_quantity: 1,
+        demo: true,
+      },
+    ]
+    showCheckoutForm.value = false
+  }
+
   const checkoutCart = async () => {
     try {
       for (const item of cartItems.value) {
+        if (item.demo) continue
         const sellerId =
           item.ownerId || item.owner_id || item.createdBy || item.seller_id
         if (!sellerId) continue
@@ -1329,6 +1413,7 @@
       }
       cartItems.value = []
       showCart.value = false
+      showCheckoutForm.value = false
       showToast(
         'Compra de teste finalizada! Os vendedores foram notificados.',
         'success',
@@ -1916,6 +2001,74 @@
     margin-top: 18px;
     padding-top: 16px;
     border-top: 1px solid #dce8df;
+  }
+
+  .cart-summary-line,
+  .checkout-total {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .cart-summary-line.muted {
+    color: #64766b;
+    font-size: 0.85rem;
+  }
+
+  .checkout-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .checkout-heading {
+    display: grid;
+    gap: 4px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #dce8df;
+  }
+
+  .checkout-heading span,
+  .demo-note {
+    color: #64766b;
+    font-size: 0.82rem;
+  }
+
+  .checkout-form label {
+    display: grid;
+    gap: 6px;
+    color: #18352a;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .checkout-form input,
+  .checkout-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #c9dbcf;
+    border-radius: 8px;
+    font: inherit;
+  }
+
+  .checkout-form textarea {
+    min-height: 68px;
+    resize: vertical;
+  }
+
+  .checkout-total {
+    padding: 12px 0;
+    border-top: 1px solid #dce8df;
+    border-bottom: 1px solid #dce8df;
+    color: #16804b;
+    font-size: 1.05rem;
+  }
+
+  .demo-note {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    background: #fff8e6;
+    color: #8a5a00;
   }
 
   .cart-empty {
