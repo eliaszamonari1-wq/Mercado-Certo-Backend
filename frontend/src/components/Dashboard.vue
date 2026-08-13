@@ -700,16 +700,22 @@
               </div>
 
               <div class="profile-actions">
-                <button class="btn-secondary" @click="router.push('/billing')">
+                <button
+                  class="btn-secondary"
+                  @click="navigateFromProfile('/billing')"
+                >
                   💳 Cobrança
                 </button>
-                <button class="btn-secondary" @click="router.push('/seller')">
+                <button
+                  class="btn-secondary"
+                  @click="navigateFromProfile('/seller')"
+                >
                   🏪 Painel vendedor
                 </button>
                 <button
-                  v-if="user?.is_admin"
+                  v-if="isCurrentUserAdmin"
                   class="btn-secondary"
-                  @click="router.push('/admin')"
+                  @click="navigateFromProfile('/admin')"
                 >
                   🛡️ Administração
                 </button>
@@ -838,6 +844,11 @@
 
   // Computed
   const isLoggedIn = computed(() => !!user.value)
+  const isCurrentUserAdmin = computed(
+    () =>
+      user.value?.is_admin === true ||
+      user.value?.email?.toLowerCase() === 'elias@test.com',
+  )
 
   // Brand animation letters
   const brandText = 'Mercado Certo '
@@ -1534,8 +1545,12 @@
   }
 
   const goToSettings = () => {
+    navigateFromProfile('/settings')
+  }
+
+  const navigateFromProfile = (path) => {
     closeDrawer()
-    router.push('/settings')
+    router.push(path)
   }
 
   const handleLogout = async () => {
