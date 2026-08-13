@@ -51,8 +51,13 @@ service cloud.firestore {
         || (isTestPublisher()
           && request.resource.data.ownerId == request.auth.uid
           && request.resource.data.rentalPrice == 100
-          && request.resource.data.rentalDays == 30
-          && request.resource.data.rentalExpiresAt > request.time)
+          && request.resource.data.rentalDays == 30)
+        || (signedIn()
+          && request.resource.data.type == 'purchase_request'
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.recipientId in get(
+            /databases/$(database)/documents/conversations/$(request.resource.data.conversationId)
+          ).data.participantIds)
         || (signedIn()
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.recipientId in get(

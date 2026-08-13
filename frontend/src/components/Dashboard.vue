@@ -628,6 +628,8 @@
     getDocs,
     onSnapshot,
     query,
+    serverTimestamp,
+    setDoc,
     where,
     updateDoc,
   } from 'firebase/firestore'
@@ -1170,7 +1172,7 @@
     selectedProduct.value = null
   }
 
-  const addToCart = (product) => {
+  const addToCart = async (product) => {
     if (!isLoggedIn.value) {
       closePreview()
       openDrawer('login')
@@ -1185,7 +1187,59 @@
       showToast('Produto esgotado!', 'error')
       return
     }
-    showToast(`${product.name} adicionado ao carrinho! 🛒`, 'success')
+
+    const sellerId =
+      product.ownerId ||
+      product.owner_id ||
+      product.createdBy ||
+      product.seller_id
+
+    if (!sellerId) {
+      showToast('Este anúncio ainda não tem vendedor atribuído.', 'warning')
+      return
+    }
+
+    try {
+      const participantIds = [auth.currentUser.uid, sellerId].sort()
+      const conversationId = `${product.id}_${participantIds.join('_')}`
+
+      await setDoc(
+        doc(db, 'conversations', conversationId),
+        {
+          listingId: product.id,
+          participantIds,
+          listingTitle: product.name,
+          listingCategory: product.category || null,
+          listingPrice: Number(product.price || 0),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      )
+
+      await addDoc(collection(db, 'notifications'), {
+        recipientId: sellerId,
+        recipientEmail: product.ownerEmail || null,
+        senderId: auth.currentUser.uid,
+        senderName:
+          auth.currentUser.displayName || auth.currentUser.email || 'Comprador',
+        conversationId,
+        type: 'purchase_request',
+        title: 'Nova solicitação de compra',
+        message: `Um comprador quer comprar "${product.name}". Esta é uma solicitação de teste, sem cobrança online.`,
+        listingId: product.id,
+        listingName: product.name,
+        read: false,
+        createdAt: new Date().toISOString(),
+      })
+
+      showToast(
+        'Solicitação de compra enviada! O vendedor foi notificado.',
+        'success',
+      )
+    } catch (error) {
+      console.error('Erro ao enviar solicitação de compra:', error)
+      showToast('Não foi possível enviar a solicitação de compra.', 'error')
+    }
     closePreview()
   }
 
