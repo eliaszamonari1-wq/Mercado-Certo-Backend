@@ -1307,6 +1307,10 @@
       showToast('Produto esgotado!', 'error')
       return
     }
+    if (product.isSold) {
+      showToast('Este card já foi vendido.', 'info')
+      return
+    }
     selectedProduct.value = product
   }
 
@@ -1357,6 +1361,7 @@
 
   const removeFromCart = (productId) => {
     cartItems.value = cartItems.value.filter((item) => item.id !== productId)
+    if (!cartItems.value.length) showCheckoutForm.value = false
   }
 
   const loadDemoCart = () => {
@@ -1375,8 +1380,11 @@
 
   const checkoutCart = async () => {
     try {
+      const hasDemoItem = cartItems.value.some((item) => item.demo)
       for (const item of cartItems.value) {
-        if (item.demo) continue
+        if (item.demo) {
+          continue
+        }
         const sellerId =
           item.ownerId || item.owner_id || item.createdBy || item.seller_id
         if (!sellerId) continue
@@ -1404,7 +1412,7 @@
           conversationId,
           type: 'purchase_request',
           title: 'Nova solicitação de compra',
-          message: `Compra de teste de ${item.quantity} unidade(s) de "${item.name}". Sem cobrança online.`,
+          message: `Compra de teste de ${item.quantity} unidade(s) de "${item.name}". Contato: ${checkoutName.value}; ${checkoutContact.value}. Entrega/retirada: ${checkoutAddress.value}. Sem cobrança online.`,
           listingId: item.id,
           listingName: item.name,
           read: false,
@@ -1415,7 +1423,9 @@
       showCart.value = false
       showCheckoutForm.value = false
       showToast(
-        'Compra de teste finalizada! Os vendedores foram notificados.',
+        hasDemoItem
+          ? 'Prévia visual concluída. Nenhum pedido real foi enviado.'
+          : 'Compra de teste finalizada! Os vendedores foram notificados.',
         'success',
       )
     } catch (error) {
