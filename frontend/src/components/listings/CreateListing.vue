@@ -158,10 +158,10 @@
       <div class="form-section info-box">
         <h3>💰 Cobrança</h3>
         <p>
-          Este novo anúncio terá uma cobrança de <strong>R$ 100,00/mês</strong>.
+          Este card será alugado por <strong>R$ 100,00 por 30 dias</strong>.
         </p>
         <p>
-          A cobrança será adicionada à sua fatura mensal, sem comissão sobre
+          O prazo começa quando o anúncio for publicado. Não há comissão sobre
           vendas.
         </p>
       </div>
@@ -179,7 +179,7 @@
 <script setup>
   import { ref, computed, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
-  import { collection, addDoc } from 'firebase/firestore'
+  import { addDoc, collection, Timestamp } from 'firebase/firestore'
   import { auth, db } from '../../firebase.js'
   import { categories as defaultCategories } from '../../utils/categories.js'
   import api from '../../utils/api.js'
@@ -296,6 +296,11 @@
 
     try {
       const createdAt = new Date().toISOString()
+      const rentalExpiresAt = Timestamp.fromDate(
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      )
+      const isAdminTest =
+        auth.currentUser?.email?.toLowerCase() === 'elias@test.com'
       const firestorePayload = {
         name: normalizedPayload.title,
         description:
@@ -324,6 +329,11 @@
           null,
         createdAt,
         updatedAt: createdAt,
+        rentalPrice: 100,
+        rentalDays: 30,
+        rentalStartedAt: createdAt,
+        rentalExpiresAt,
+        isTestListing: isAdminTest,
       }
 
       await addDoc(collection(db, 'products'), firestorePayload)
@@ -353,8 +363,32 @@
   const loadCategories = async () => {
     try {
       const response = await api.get('/listings/categories')
-      if (response.data && Object.keys(response.data).length) {
-        categories.value = response.data
+      const remoteCategories = response.data
+      const hasValidRemoteCategories =
+        remoteCategories &&
+        Object.entries(remoteCategories).every(
+          ([key, category]) =>
+            defaultCategories[key] &&
+            category?.name &&
+            Array.isArray(category.subcategories),
+        )
+
+      if (hasValidRemoteCategories) {
+        categories.value = Object.fromEntries(
+          Object.keys(defaultCategories).map((key) => [
+            key,
+            {
+              ...defaultCategories[key],
+              ...remoteCategories[key],
+              subcategories: [
+                ...new Set([
+                  ...defaultCategories[key].subcategories,
+                  ...remoteCategories[key].subcategories,
+                ]),
+              ],
+            },
+          ]),
+        )
       }
     } catch (error) {
       console.warn('Usando categorias locais:', error.message)

@@ -64,8 +64,11 @@
             >
               {{ getListingStatus(listing).label }}
             </span>
-            <span class="listing-fee">R$ 100,00/mês</span>
+            <span class="listing-fee">R$ 100,00 / 30 dias</span>
           </div>
+          <span v-if="listing.isTestListing" class="test-listing-badge">
+            Teste autorizado
+          </span>
           <h3>{{ listing.name || 'Anúncio sem título' }}</h3>
           <p class="listing-category">
             {{ listing.category || 'Sem categoria' }}
@@ -81,6 +84,12 @@
             <div>
               <dt>Preço</dt>
               <dd>R$ {{ formatMoney(listing.price) }}</dd>
+            </div>
+            <div>
+              <dt>Aluguel</dt>
+              <dd>
+                30 dias · R$ {{ formatMoney(listing.rentalPrice || 100) }}
+              </dd>
             </div>
           </dl>
           <label class="owner-field">
@@ -456,6 +465,15 @@
   }
   .listing-fee {
     color: #18352a;
+  }
+  .test-listing-badge {
+    width: fit-content;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #fff4d6;
+    color: #8a5a00;
+    font-size: 0.72rem;
+    font-weight: 800;
   }
   .listing-card h3 {
     margin: 0;
