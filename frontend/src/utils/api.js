@@ -1,9 +1,7 @@
 import axios from 'axios'
 
 const configuredBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, '')
-const defaultBaseUrl = import.meta.env.DEV
-  ? '/api'
-  : 'https://betas-backend.onrender.com/api'
+const defaultBaseUrl = '/api'
 
 export const apiBaseUrl = configuredBaseUrl || defaultBaseUrl
 

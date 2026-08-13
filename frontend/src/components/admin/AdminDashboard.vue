@@ -53,8 +53,9 @@
 </template>
 
 <script setup>
+  import { collection, getDocs } from 'firebase/firestore'
   import { onMounted, ref } from 'vue'
-  import api from '../../utils/api.js'
+  import { db } from '../../firebase.js'
 
   const dashboard = ref({})
   const loading = ref(true)
@@ -70,12 +71,51 @@
     loading.value = true
     error.value = ''
     try {
-      const response = await api.get('/admin/dashboard')
-      dashboard.value = response.data
+      const [productsSnapshot, subscriptionsSnapshot] = await Promise.all([
+        getDocs(collection(db, 'products')),
+        getDocs(collection(db, 'subscriptions')),
+      ])
+
+      const products = productsSnapshot.docs.map((item) => item.data())
+      const subscriptions = subscriptionsSnapshot.docs.map((item) =>
+        item.data(),
+      )
+      const activeSubscriptions = subscriptions.filter(
+        (item) => item.status === 'active',
+      )
+      const owners = new Set(
+        products.map((item) => item.ownerId).filter(Boolean),
+      )
+      const monthlyRevenue = activeSubscriptions.reduce(
+        (total, item) => total + Number(item.amount || item.price || 0),
+        0,
+      )
+
+      dashboard.value = {
+        users: {
+          total: owners.size,
+          active: owners.size,
+        },
+        listings: {
+          active: products.filter((item) => item.isSold !== true).length,
+          paused: products.filter((item) => item.status === 'paused').length,
+        },
+        financial: {
+          mrr: {
+            total: monthlyRevenue,
+            billing_count: activeSubscriptions.length,
+          },
+          delinquent: {
+            count: subscriptions.filter(
+              (item) =>
+                item.status === 'delinquent' || item.status === 'pending',
+            ).length,
+          },
+        },
+      }
     } catch (requestError) {
-      error.value =
-        requestError.response?.data?.message ||
-        'Não foi possível carregar o painel administrativo.'
+      console.error('Erro ao carregar painel Firestore:', requestError)
+      error.value = 'Não foi possível carregar os dados do Firestore.'
     } finally {
       loading.value = false
     }
