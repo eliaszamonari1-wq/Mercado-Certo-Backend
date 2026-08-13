@@ -175,20 +175,35 @@
         <div>
           <span class="eyebrow">Operação</span>
           <h2>Atalhos operacionais</h2>
-          <p>
-            Gerencie vendas, cobrança e planos no mesmo ambiente administrativo.
-          </p>
+          <p>Indicadores e acessos para a rotina da plataforma.</p>
         </div>
-        <div class="admin-link-grid">
-          <RouterLink to="/seller" class="admin-action-link"
-            >🏪 Painel vendedor</RouterLink
-          >
-          <RouterLink to="/billing" class="admin-action-link"
-            >💳 Cobranças</RouterLink
-          >
-          <RouterLink to="/plans" class="admin-action-link"
-            >📋 Planos</RouterLink
-          >
+        <div class="admin-info-grid">
+          <article class="admin-info-card">
+            <span>Vendedores</span>
+            <strong>{{ dashboard.users?.total || 0 }}</strong>
+            <small>usuários com operação</small>
+            <RouterLink to="/seller" class="admin-action-link"
+              >Abrir painel</RouterLink
+            >
+          </article>
+          <article class="admin-info-card">
+            <span>Cobranças</span>
+            <strong
+              >R$ {{ formatMoney(dashboard.financial?.mrr?.total) }}</strong
+            >
+            <small>recorrência prevista</small>
+            <RouterLink to="/billing" class="admin-action-link"
+              >Ver cobrança</RouterLink
+            >
+          </article>
+          <article class="admin-info-card">
+            <span>Planos</span>
+            <strong>30 dias</strong>
+            <small>ciclo de aluguel por card</small>
+            <RouterLink to="/plans" class="admin-action-link"
+              >Gerenciar planos</RouterLink
+            >
+          </article>
         </div>
       </section>
 
@@ -196,11 +211,16 @@
         <div>
           <span class="eyebrow">Configurações</span>
           <h2>Preferências da conta</h2>
-          <p>Acesse as configurações sem perder o contexto da administração.</p>
+          <p>Controle sua conta e as preferências administrativas.</p>
         </div>
-        <RouterLink to="/settings" class="admin-action-link"
-          >⚙️ Abrir configurações</RouterLink
-        >
+        <article class="admin-info-card settings-card">
+          <span>Perfil administrativo</span>
+          <strong>Conta e segurança</strong>
+          <small>Nome, senha e preferências de acesso</small>
+          <RouterLink to="/settings" class="admin-action-link"
+            >⚙️ Abrir configurações</RouterLink
+          >
+        </article>
       </section>
 
       <section class="admin-section">
@@ -565,7 +585,7 @@
     border-top: 1px solid #dce8df;
   }
   .admin-link-section {
-    align-items: center;
+    display: block;
     margin-top: 20px;
     padding: 18px 0;
   }
@@ -575,11 +595,41 @@
   .admin-link-section p {
     margin: 0;
   }
-  .admin-link-grid {
+  .admin-info-grid {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .admin-info-card {
+    display: grid;
+    min-width: 0;
+    gap: 5px;
+    padding: 15px;
+    border: 1px solid #dce8df;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(27, 68, 45, 0.06);
+  }
+
+  .admin-info-card span,
+  .admin-info-card small {
+    color: #64766b;
+    font-size: 0.78rem;
+  }
+
+  .admin-info-card strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #18352a;
+    font-size: 1.15rem;
+  }
+
+  .admin-info-card .admin-action-link {
+    justify-self: start;
+    margin-top: 7px;
   }
   .admin-action-link {
     display: inline-flex;
@@ -833,8 +883,8 @@
       align-items: flex-start;
       flex-direction: column;
     }
-    .admin-link-grid {
-      justify-content: flex-start;
+    .admin-info-grid {
+      grid-template-columns: 1fr;
     }
     .listing-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
