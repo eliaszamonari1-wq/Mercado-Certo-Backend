@@ -548,6 +548,8 @@
     cursor: pointer;
     font-weight: 700;
     text-decoration: none;
+    align-self: center;
+    white-space: nowrap;
   }
   .metric-grid {
     display: grid;
