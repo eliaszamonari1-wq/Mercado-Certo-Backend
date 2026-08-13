@@ -15,9 +15,8 @@
       <a href="#overview" class="sidebar-link">Visão geral</a>
       <a href="#listings" class="sidebar-link">Anúncios e cobrança</a>
       <a href="#users" class="sidebar-link">Usuários</a>
-      <span class="sidebar-label secondary-label">Operação</span>
-      <RouterLink to="/plans" class="sidebar-link">Planos</RouterLink>
-      <RouterLink to="/settings" class="sidebar-link">Configurações</RouterLink>
+      <a href="#operations" class="sidebar-link">Operações</a>
+      <a href="#settings-panel" class="sidebar-link">Configurações</a>
     </aside>
 
     <main class="admin-page">
@@ -170,6 +169,38 @@
           </article>
         </div>
         <p v-else class="empty-listings">Nenhum usuário cadastrado ainda.</p>
+      </section>
+
+      <section id="operations" class="admin-section admin-link-section">
+        <div>
+          <span class="eyebrow">Operação</span>
+          <h2>Atalhos operacionais</h2>
+          <p>
+            Gerencie vendas, cobrança e planos no mesmo ambiente administrativo.
+          </p>
+        </div>
+        <div class="admin-link-grid">
+          <RouterLink to="/seller" class="admin-action-link"
+            >🏪 Painel vendedor</RouterLink
+          >
+          <RouterLink to="/billing" class="admin-action-link"
+            >💳 Cobranças</RouterLink
+          >
+          <RouterLink to="/plans" class="admin-action-link"
+            >📋 Planos</RouterLink
+          >
+        </div>
+      </section>
+
+      <section id="settings-panel" class="admin-section admin-link-section">
+        <div>
+          <span class="eyebrow">Configurações</span>
+          <h2>Preferências da conta</h2>
+          <p>Acesse as configurações sem perder o contexto da administração.</p>
+        </div>
+        <RouterLink to="/settings" class="admin-action-link"
+          >⚙️ Abrir configurações</RouterLink
+        >
       </section>
 
       <section class="admin-section">
@@ -533,6 +564,39 @@
     padding: 24px;
     border-top: 1px solid #dce8df;
   }
+  .admin-link-section {
+    align-items: center;
+    margin-top: 20px;
+    padding: 18px 0;
+  }
+  .admin-link-section h2 {
+    margin: 5px 0;
+  }
+  .admin-link-section p {
+    margin: 0;
+  }
+  .admin-link-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .admin-action-link {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    padding: 8px 11px;
+    border: 1px solid #c9dbcf;
+    border-radius: 7px;
+    color: #18352a;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .admin-action-link:hover {
+    background: #eaf7ee;
+    color: #16804b;
+  }
   .listings-section {
     margin-top: 32px;
   }
@@ -768,6 +832,9 @@
     .section-heading {
       align-items: flex-start;
       flex-direction: column;
+    }
+    .admin-link-grid {
+      justify-content: flex-start;
     }
     .listing-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
