@@ -2,6 +2,14 @@ import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import Dashboard from './components/Dashboard.vue'
+import AdminDashboard from './components/admin/AdminDashboard.vue'
+import CreateListing from './components/listings/CreateListing.vue'
+import ListingDetail from './components/listings/ListingDetail.vue'
+import PricingPlans from './components/plans/PricingPlans.vue'
+import BillingPage from './components/user/BillingPage.vue'
+import ChatView from './components/user/ChatView.vue'
+import SellerDashboard from './components/user/SellerDashboard.vue'
+import SettingsPage from './components/user/SettingsPage.vue'
 import './firebase.js'
 import './style.css'
 import { startTabAnimation } from './utils/tabAnimation.js'
@@ -20,47 +28,47 @@ const routes = [
   {
     path: '/settings',
     name: 'Settings',
-    component: () => import('./components/user/SettingsPage.vue'),
+    component: SettingsPage,
     meta: { requiresAuth: true },
   },
   {
     path: '/plans',
     name: 'Plans',
-    component: () => import('./components/plans/PricingPlans.vue'),
+    component: PricingPlans,
   },
   {
     path: '/seller',
     name: 'SellerDashboard',
-    component: () => import('./components/user/SellerDashboard.vue'),
+    component: SellerDashboard,
     meta: { requiresAuth: true },
   },
   {
     path: '/billing',
     name: 'Billing',
-    component: () => import('./components/user/BillingPage.vue'),
+    component: BillingPage,
     meta: { requiresAuth: true },
   },
   {
     path: '/create-listing',
     name: 'CreateListing',
-    component: () => import('./components/listings/CreateListing.vue'),
+    component: CreateListing,
     meta: { requiresAuth: true },
   },
   {
     path: '/listing/:id',
     name: 'ListingDetail',
-    component: () => import('./components/listings/ListingDetail.vue'),
+    component: ListingDetail,
   },
   {
     path: '/chat',
     name: 'chat',
-    component: () => import('./components/user/ChatView.vue'),
+    component: ChatView,
     meta: { requiresAuth: true },
   },
   {
     path: '/admin',
     name: 'AdminDashboard',
-    component: () => import('./components/admin/AdminDashboard.vue'),
+    component: AdminDashboard,
     meta: { requiresAuth: true, requiresAdmin: true },
   },
 ]
