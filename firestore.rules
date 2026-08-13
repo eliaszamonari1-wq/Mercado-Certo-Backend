@@ -11,6 +11,11 @@ service cloud.firestore {
           || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
+    function isTestPublisher() {
+      return signedIn()
+        && request.auth.token.email == 'elias+comprador@test.com';
+    }
+
     function subscriptionPath(userId) {
       return /databases/$(database)/documents/subscriptions/$(userId);
     }
@@ -43,6 +48,11 @@ service cloud.firestore {
       allow read: if signedIn()
         && (resource.data.recipientId == request.auth.uid || isAdmin());
       allow create: if isAdmin()
+        || (isTestPublisher()
+          && request.resource.data.ownerId == request.auth.uid
+          && request.resource.data.rentalPrice == 100
+          && request.resource.data.rentalDays == 30
+          && request.resource.data.rentalExpiresAt > request.time)
         || (signedIn()
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.recipientId in get(

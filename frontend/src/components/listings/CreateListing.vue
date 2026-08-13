@@ -343,16 +343,7 @@
       return
     } catch (firestoreError) {
       console.error('Erro ao criar anúncio no Firestore:', firestoreError)
-    }
-
-    try {
-      const response = await api.post('/listings', normalizedPayload)
-
-      alert('Anúncio criado com sucesso!')
-      router.push(`/listing/${response.data.listing.id || ''}`)
-    } catch (error) {
-      console.error('Erro ao criar anúncio:', error)
-      alert(getUserFacingError(error))
+      alert(getUserFacingError(firestoreError))
     }
   }
 
