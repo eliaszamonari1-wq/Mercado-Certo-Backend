@@ -458,6 +458,8 @@
   }
 
   .admin-page {
+    width: 100%;
+    min-width: 0;
     max-width: 1180px;
     margin: 0 auto;
     padding: 28px 24px 44px;
@@ -555,10 +557,11 @@
   }
   .listing-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
     gap: 16px;
   }
   .listing-card {
+    min-width: 0;
     display: grid;
     gap: 12px;
     padding: 20px;
@@ -615,6 +618,7 @@
     margin: 0;
   }
   .listing-details div {
+    min-width: 0;
     display: flex;
     justify-content: space-between;
     gap: 12px;
@@ -625,6 +629,8 @@
     color: #64766b;
   }
   .listing-details dd {
+    min-width: 0;
+    overflow-wrap: anywhere;
     margin: 0;
     color: #18352a;
     font-weight: 700;
@@ -652,6 +658,21 @@
     background: #f8fbf9;
     color: #18352a;
     font: inherit;
+  }
+
+  .delete-listing-button {
+    width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    padding: 9px 10px;
+    border: 1px solid #e7caca;
+    border-radius: 6px;
+    background: #fff7f7;
+    color: #a33b3b;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
   }
   .users-section {
     margin-top: 36px;
