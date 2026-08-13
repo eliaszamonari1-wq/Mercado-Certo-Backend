@@ -350,6 +350,10 @@
               <div class="product-owner-status">
                 {{ getProductOwnerStatus(product) }}
               </div>
+              <div v-if="product.rentalExpiresAt" class="rental-expiry">
+                🗓️ Aluguel disponível até
+                {{ formatRentalExpiry(product.rentalExpiresAt) }}
+              </div>
 
               <div
                 class="product-colors"
@@ -396,9 +400,7 @@
                   class="btn-secondary"
                   @click.stop="toggleSoldStatus(product)"
                 >
-                  {{
-                    product.isSold ? '🔁 Reabrir venda' : '✅ Marcar vendido'
-                  }}
+                  {{ product.isSold ? '➕ Nova venda' : '✅ Marcar vendido' }}
                 </button>
                 <button
                   v-if="isOwnedByCurrentUser(product) && !product.isSold"
@@ -1038,6 +1040,13 @@
     return '⚪ Fornecedor não disponível'
   }
 
+  const formatRentalExpiry = (value) => {
+    if (!value) return 'data não informada'
+    const date = value.toDate ? value.toDate() : new Date(value)
+    if (Number.isNaN(date.getTime())) return 'data não informada'
+    return date.toLocaleDateString('pt-BR')
+  }
+
   const openEditProduct = (product) => {
     if (!currentUserId.value) {
       showToast('Faça login para editar seus produtos.', 'warning')
@@ -1427,8 +1436,8 @@
             'Comprador',
           conversationId,
           type: 'purchase_request',
-          title: 'Nova solicitação de compra',
-          message: `Compra de teste de ${item.quantity} unidade(s) de "${item.name}". Contato: ${checkoutName.value}; ${checkoutContact.value}. Entrega/retirada: ${checkoutAddress.value}. Sem cobrança online.`,
+          title: 'Produto comprado',
+          message: `O produto "${item.name}" foi comprado em teste. Para colocar uma nova venda, reabra o card. Contato: ${checkoutName.value}; ${checkoutContact.value}. Entrega/retirada: ${checkoutAddress.value}. Sem cobrança online.`,
           listingId: item.id,
           listingName: item.name,
           read: false,
@@ -1589,9 +1598,7 @@
         query(collection(db, 'orders'), where('buyerId', '==', userId)),
       )
       purchasedProductIds.value = new Set(
-        snapshot.docs
-          .map((item) => item.data().productId)
-          .filter(Boolean),
+        snapshot.docs.map((item) => item.data().productId).filter(Boolean),
       )
     } catch (error) {
       console.warn('Não foi possível carregar compras:', error.message)
@@ -2720,6 +2727,12 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .rental-expiry {
+    color: #8a5a00;
+    font-size: 11px;
+    font-weight: 700;
   }
 
   .product-supplier {

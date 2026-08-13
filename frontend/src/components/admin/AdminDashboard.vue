@@ -91,6 +91,10 @@
                 30 dias · R$ {{ formatMoney(listing.rentalPrice || 100) }}
               </dd>
             </div>
+            <div v-if="listing.rentalExpiresAt">
+              <dt>Disponível até</dt>
+              <dd>{{ formatRentalExpiry(listing.rentalExpiresAt) }}</dd>
+            </div>
           </dl>
           <label class="owner-field">
             <span>Atribuir usuário</span>
@@ -265,6 +269,13 @@
       return { label: 'Vendido', class: 'sold' }
     }
     return { label: 'Ativo', class: 'active' }
+  }
+
+  function formatRentalExpiry(value) {
+    const date = value?.toDate ? value.toDate() : new Date(value)
+    return Number.isNaN(date.getTime())
+      ? 'Data não informada'
+      : date.toLocaleDateString('pt-BR')
   }
 
   function assignedCount(userId) {
