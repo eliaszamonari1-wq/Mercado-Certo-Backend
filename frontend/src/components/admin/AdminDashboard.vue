@@ -372,8 +372,8 @@
 <style scoped>
   .admin-shell {
     min-height: 100vh;
-    padding-top: 68px;
-    padding-left: 220px;
+    padding-top: 56px;
+    padding-left: 188px;
     background: #f4fbf5;
   }
 
@@ -384,10 +384,10 @@
     right: 0;
     left: 0;
     display: flex;
-    height: 68px;
+    height: 56px;
     align-items: center;
     justify-content: space-between;
-    padding: 0 28px;
+    padding: 0 20px;
     border-bottom: 1px solid #dce8df;
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(14px);
@@ -395,7 +395,7 @@
 
   .admin-brand {
     color: #18352a;
-    font-size: 1.15rem;
+    font-size: 1rem;
     font-weight: 900;
     text-decoration: none;
   }
@@ -417,20 +417,20 @@
   .admin-sidebar {
     position: fixed;
     z-index: 9;
-    top: 68px;
+    top: 56px;
     bottom: 0;
     left: 0;
     display: flex;
-    width: 220px;
+    width: 188px;
     flex-direction: column;
-    gap: 6px;
-    padding: 24px 14px;
+    gap: 3px;
+    padding: 16px 10px;
     border-right: 1px solid #dce8df;
     background: #fff;
   }
 
   .sidebar-label {
-    margin: 8px 10px 4px;
+    margin: 7px 8px 3px;
     color: #8a9a90;
     font-size: 0.7rem;
     font-weight: 800;
@@ -439,14 +439,14 @@
   }
 
   .secondary-label {
-    margin-top: 24px;
+    margin-top: 16px;
   }
 
   .sidebar-link {
-    padding: 11px 12px;
+    padding: 8px 10px;
     border-radius: 8px;
     color: #365344;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 700;
     text-decoration: none;
   }
@@ -460,7 +460,7 @@
   .admin-page {
     max-width: 1180px;
     margin: 0 auto;
-    padding: 36px 28px 56px;
+    padding: 28px 24px 44px;
     color: #172b22;
   }
   .admin-header {
