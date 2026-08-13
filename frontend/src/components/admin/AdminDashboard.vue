@@ -3,7 +3,9 @@
     <header class="admin-navbar">
       <RouterLink to="/dashboard" class="admin-brand">Mercado Certo</RouterLink>
       <div class="admin-navbar-actions">
-        <span class="admin-current-section">{{ activeSection }}</span>
+        <span class="admin-current-section"
+          >Administração · {{ activeSection }}</span
+        >
         <RouterLink to="/dashboard" class="back-link"
           >Voltar ao site</RouterLink
         >
