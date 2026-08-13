@@ -785,6 +785,7 @@
   const checkoutName = ref('')
   const checkoutContact = ref('')
   const checkoutAddress = ref('')
+  const purchasedProductIds = ref(new Set())
   const lastUpdated = ref(null)
   let refreshTimer = null
   let searchTimeout = null
@@ -879,6 +880,7 @@
     const term = searchTerm.value.trim().toLowerCase()
 
     return products.value.filter((product) => {
+      if (purchasedProductIds.value.has(product.id)) return false
       const categoryTitle = String(product.category || '').trim()
       const matchesCategory =
         selectedCategory.value === 'all' ||
@@ -1390,6 +1392,20 @@
         if (!sellerId) continue
         const participantIds = [auth.currentUser.uid, sellerId].sort()
         const conversationId = `${item.id}_${participantIds.join('_')}`
+        await addDoc(collection(db, 'orders'), {
+          buyerId: auth.currentUser.uid,
+          sellerId,
+          productId: item.id,
+          productName: item.name,
+          quantity: item.quantity,
+          total: item.price * item.quantity,
+          contactName: checkoutName.value,
+          contact: checkoutContact.value,
+          delivery: checkoutAddress.value,
+          status: 'test_requested',
+          paymentStatus: 'not_configured',
+          createdAt: new Date().toISOString(),
+        })
         await setDoc(
           doc(db, 'conversations', conversationId),
           {
@@ -1418,6 +1434,10 @@
           read: false,
           createdAt: new Date().toISOString(),
         })
+        purchasedProductIds.value = new Set([
+          ...purchasedProductIds.value,
+          item.id,
+        ])
       }
       cartItems.value = []
       showCart.value = false
@@ -1560,6 +1580,24 @@
     }
   }
 
+  const loadPurchasedProducts = async () => {
+    const userId = auth.currentUser?.uid || currentUserId.value
+    if (!userId) return
+
+    try {
+      const snapshot = await getDocs(
+        query(collection(db, 'orders'), where('buyerId', '==', userId)),
+      )
+      purchasedProductIds.value = new Set(
+        snapshot.docs
+          .map((item) => item.data().productId)
+          .filter(Boolean),
+      )
+    } catch (error) {
+      console.warn('Não foi possível carregar compras:', error.message)
+    }
+  }
+
   const subscribeToNotifications = () => {
     const userId = auth.currentUser?.uid || currentUserId.value
     if (!userId) return
@@ -1630,6 +1668,7 @@
     if (authenticated) {
       await refreshProfile()
       await loadNotifications()
+      await loadPurchasedProducts()
       subscribeToNotifications()
     } else {
       loadingProfile.value = false
