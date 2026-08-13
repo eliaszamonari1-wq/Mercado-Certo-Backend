@@ -280,9 +280,11 @@
   .chat-container {
     max-width: 800px;
     margin: 0 auto;
-    height: 600px;
+    height: min(600px, calc(100dvh - 32px));
+    min-height: 420px;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -331,6 +333,7 @@
 
   .chat-messages {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 16px;
     display: flex;
@@ -377,6 +380,7 @@
   }
 
   .chat-input-section {
+    flex-shrink: 0;
     padding: 16px;
     border-top: 1px solid #eee;
   }
@@ -468,5 +472,68 @@
 
   .btn-send:hover {
     background: #1566a8;
+  }
+
+  @media (max-width: 600px) {
+    .chat-container {
+      width: 100%;
+      height: calc(100dvh - 16px);
+      min-height: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .chat-header {
+      padding: 14px;
+    }
+
+    .chat-header h2 {
+      font-size: 17px;
+    }
+
+    .chat-messages {
+      padding: 12px;
+      gap: 8px;
+    }
+
+    .message-content {
+      max-width: 86%;
+      padding: 9px 10px;
+    }
+
+    .chat-input-section {
+      padding: 10px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    .intent-actions {
+      flex-wrap: nowrap;
+      margin: 0 -2px 10px;
+      overflow-x: auto;
+      padding: 2px;
+      scrollbar-width: none;
+    }
+
+    .intent-actions::-webkit-scrollbar {
+      display: none;
+    }
+
+    .intent-actions button {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .chat-form {
+      align-items: stretch;
+    }
+
+    textarea {
+      min-width: 0;
+      height: 48px;
+    }
+
+    .btn-send {
+      padding: 10px 14px;
+    }
   }
 </style>
