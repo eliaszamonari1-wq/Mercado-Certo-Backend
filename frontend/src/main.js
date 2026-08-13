@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import Dashboard from './components/Dashboard.vue'
+import AdminAccessDenied from './components/admin/AdminAccessDenied.vue'
 import AdminDashboard from './components/admin/AdminDashboard.vue'
 import CreateListing from './components/listings/CreateListing.vue'
 import ListingDetail from './components/listings/ListingDetail.vue'
@@ -71,6 +72,12 @@ const routes = [
     component: AdminDashboard,
     meta: { requiresAuth: true, requiresAdmin: true },
   },
+  {
+    path: '/admin/access-denied',
+    name: 'AdminAccessDenied',
+    component: AdminAccessDenied,
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({
@@ -91,7 +98,9 @@ router.beforeEach((to, from, next) => {
     const isAdmin =
       storedUser?.is_admin === true ||
       storedUser?.email?.toLowerCase() === 'elias@test.com'
-    if (!isAdmin) return next({ name: 'Dashboard' })
+    if (!isAdmin) {
+      return next({ name: 'AdminAccessDenied', query: { from: to.fullPath } })
+    }
   }
 
   return next()

@@ -1,163 +1,189 @@
 <template>
-  <main class="admin-page">
-    <header class="admin-header">
-      <div>
-        <span class="eyebrow">Mercado Certo / Administração</span>
-        <h1>Visão geral</h1>
-        <p>Acompanhe usuários, anúncios e receita recorrente.</p>
+  <div class="admin-shell">
+    <header class="admin-navbar">
+      <RouterLink to="/dashboard" class="admin-brand">Mercado Certo</RouterLink>
+      <div class="admin-navbar-actions">
+        <span>Administração</span>
+        <RouterLink to="/dashboard" class="back-link"
+          >Voltar ao site</RouterLink
+        >
       </div>
-      <button type="button" class="refresh-button" @click="loadDashboard">
-        Atualizar
-      </button>
     </header>
 
-    <p v-if="error" class="error-message">{{ error }}</p>
-    <section v-if="loading" class="state">
-      Carregando dados administrativos...
-    </section>
-    <section v-else class="metric-grid">
-      <article class="metric-card">
-        <span>Usuários</span><strong>{{ dashboard.users?.total || 0 }}</strong
-        ><small>{{ dashboard.users?.active || 0 }} ativos</small>
-      </article>
-      <article class="metric-card">
-        <span>Anúncios ativos</span
-        ><strong>{{ dashboard.listings?.active || 0 }}</strong
-        ><small>{{ dashboard.listings?.paused || 0 }} pausados</small>
-      </article>
-      <article class="metric-card">
-        <span>Receita mensal</span
-        ><strong>R$ {{ formatMoney(dashboard.financial?.mrr?.total) }}</strong
-        ><small
-          >{{ dashboard.financial?.mrr?.billing_count || 0 }} cobranças</small
-        >
-      </article>
-      <article class="metric-card warning">
-        <span>Inadimplentes</span
-        ><strong>{{ dashboard.financial?.delinquent?.count || 0 }}</strong
-        ><small>vendedores para acompanhar</small>
-      </article>
-    </section>
+    <aside class="admin-sidebar">
+      <span class="sidebar-label">Gestão</span>
+      <a href="#overview" class="sidebar-link">Visão geral</a>
+      <a href="#listings" class="sidebar-link">Anúncios e cobrança</a>
+      <a href="#users" class="sidebar-link">Usuários</a>
+      <span class="sidebar-label secondary-label">Operação</span>
+      <RouterLink to="/plans" class="sidebar-link">Planos</RouterLink>
+      <RouterLink to="/settings" class="sidebar-link">Configurações</RouterLink>
+    </aside>
 
-    <section v-if="!loading" class="listings-section">
-      <div class="section-heading">
+    <main class="admin-page">
+      <header id="overview" class="admin-header">
         <div>
-          <span class="eyebrow">Cobrança por anúncio</span>
-          <h2>Anúncios publicados</h2>
-          <p>Cada card publicado gera uma cobrança fixa de R$ 100,00/mês.</p>
+          <span class="eyebrow">Mercado Certo / Administração</span>
+          <h1>Visão geral</h1>
+          <p>Acompanhe usuários, anúncios e receita recorrente.</p>
         </div>
-        <strong class="section-total"
-          >R$ {{ formatMoney(listingMonthlyTotal) }}/mês</strong
-        >
-      </div>
+        <button type="button" class="refresh-button" @click="loadDashboard">
+          Atualizar
+        </button>
+      </header>
 
-      <div v-if="listings.length" class="listing-grid">
-        <article
-          v-for="listing in listings"
-          :key="listing.id"
-          class="listing-card"
-        >
-          <div class="listing-card-top">
-            <span
-              class="listing-status"
-              :class="getListingStatus(listing).class"
-            >
-              {{ getListingStatus(listing).label }}
-            </span>
-            <span class="listing-fee">R$ 100,00 / 30 dias</span>
-          </div>
-          <span v-if="listing.isTestListing" class="test-listing-badge">
-            Teste autorizado
-          </span>
-          <h3>{{ listing.name || 'Anúncio sem título' }}</h3>
-          <p class="listing-category">
-            {{ listing.category || 'Sem categoria' }}
-            <span v-if="listing.subcategory">/ {{ listing.subcategory }}</span>
-          </p>
-          <dl class="listing-details">
-            <div>
-              <dt>Vendedor</dt>
-              <dd>
-                {{ listing.ownerName || listing.supplier || 'Não informado' }}
-              </dd>
-            </div>
-            <div>
-              <dt>Preço</dt>
-              <dd>R$ {{ formatMoney(listing.price) }}</dd>
-            </div>
-            <div>
-              <dt>Aluguel</dt>
-              <dd>
-                30 dias · R$ {{ formatMoney(listing.rentalPrice || 100) }}
-              </dd>
-            </div>
-            <div v-if="listing.rentalExpiresAt">
-              <dt>Disponível até</dt>
-              <dd>{{ formatRentalExpiry(listing.rentalExpiresAt) }}</dd>
-            </div>
-          </dl>
-          <label class="owner-field">
-            <span>Atribuir usuário</span>
-            <select
-              :value="listing.ownerId || ''"
-              @change="assignListing(listing, $event.target.value)"
-            >
-              <option value="">Sem usuário atribuído</option>
-              <option
-                v-for="person in users"
-                :key="person.id"
-                :value="person.id"
-              >
-                {{ person.name }} · {{ person.email }}
-              </option>
-            </select>
-          </label>
-          <button
-            type="button"
-            class="delete-listing-button"
-            @click="deleteListing(listing)"
+      <p v-if="error" class="error-message">{{ error }}</p>
+      <section v-if="loading" class="state">
+        Carregando dados administrativos...
+      </section>
+      <section v-else class="metric-grid">
+        <article class="metric-card">
+          <span>Usuários</span><strong>{{ dashboard.users?.total || 0 }}</strong
+          ><small>{{ dashboard.users?.active || 0 }} ativos</small>
+        </article>
+        <article class="metric-card">
+          <span>Anúncios ativos</span
+          ><strong>{{ dashboard.listings?.active || 0 }}</strong
+          ><small>{{ dashboard.listings?.paused || 0 }} pausados</small>
+        </article>
+        <article class="metric-card">
+          <span>Receita mensal</span
+          ><strong>R$ {{ formatMoney(dashboard.financial?.mrr?.total) }}</strong
+          ><small
+            >{{ dashboard.financial?.mrr?.billing_count || 0 }} cobranças</small
           >
-            Excluir card e notificar usuário
-          </button>
         </article>
-      </div>
-      <p v-else class="empty-listings">Nenhum anúncio publicado ainda.</p>
-    </section>
+        <article class="metric-card warning">
+          <span>Inadimplentes</span
+          ><strong>{{ dashboard.financial?.delinquent?.count || 0 }}</strong
+          ><small>vendedores para acompanhar</small>
+        </article>
+      </section>
 
-    <section v-if="!loading" class="users-section">
-      <div class="section-heading">
-        <div>
-          <span class="eyebrow">Gestão de usuários</span>
-          <h2>Usuários cadastrados</h2>
-          <p>Veja quantos cards estão atribuídos a cada usuário.</p>
-        </div>
-      </div>
-      <div v-if="users.length" class="users-grid">
-        <article v-for="person in users" :key="person.id" class="user-card">
-          <div class="user-card-avatar">
-            {{ person.name.charAt(0).toUpperCase() }}
-          </div>
+      <section id="listings" v-if="!loading" class="listings-section">
+        <div class="section-heading">
           <div>
-            <h3>{{ person.name }}</h3>
-            <p>{{ person.email }}</p>
-            <strong>{{ assignedCount(person.id) }} card(s) atribuído(s)</strong>
+            <span class="eyebrow">Cobrança por anúncio</span>
+            <h2>Anúncios publicados</h2>
+            <p>Cada card publicado gera uma cobrança fixa de R$ 100,00/mês.</p>
           </div>
-        </article>
-      </div>
-      <p v-else class="empty-listings">Nenhum usuário cadastrado ainda.</p>
-    </section>
+          <strong class="section-total"
+            >R$ {{ formatMoney(listingMonthlyTotal) }}/mês</strong
+          >
+        </div>
 
-    <section class="admin-section">
-      <div>
-        <h2>Regras administrativas</h2>
-        <p>
-          Somente usuários com `is_admin` podem acessar os dados financeiros e
-          relatórios.
-        </p>
-      </div>
-      <RouterLink to="/plans" class="secondary-link">Ver planos</RouterLink>
-    </section>
-  </main>
+        <div v-if="listings.length" class="listing-grid">
+          <article
+            v-for="listing in listings"
+            :key="listing.id"
+            class="listing-card"
+          >
+            <div class="listing-card-top">
+              <span
+                class="listing-status"
+                :class="getListingStatus(listing).class"
+              >
+                {{ getListingStatus(listing).label }}
+              </span>
+              <span class="listing-fee">R$ 100,00 / 30 dias</span>
+            </div>
+            <span v-if="listing.isTestListing" class="test-listing-badge">
+              Teste autorizado
+            </span>
+            <h3>{{ listing.name || 'Anúncio sem título' }}</h3>
+            <p class="listing-category">
+              {{ listing.category || 'Sem categoria' }}
+              <span v-if="listing.subcategory"
+                >/ {{ listing.subcategory }}</span
+              >
+            </p>
+            <dl class="listing-details">
+              <div>
+                <dt>Vendedor</dt>
+                <dd>
+                  {{ listing.ownerName || listing.supplier || 'Não informado' }}
+                </dd>
+              </div>
+              <div>
+                <dt>Preço</dt>
+                <dd>R$ {{ formatMoney(listing.price) }}</dd>
+              </div>
+              <div>
+                <dt>Aluguel</dt>
+                <dd>
+                  30 dias · R$ {{ formatMoney(listing.rentalPrice || 100) }}
+                </dd>
+              </div>
+              <div v-if="listing.rentalExpiresAt">
+                <dt>Disponível até</dt>
+                <dd>{{ formatRentalExpiry(listing.rentalExpiresAt) }}</dd>
+              </div>
+            </dl>
+            <label class="owner-field">
+              <span>Atribuir usuário</span>
+              <select
+                :value="listing.ownerId || ''"
+                @change="assignListing(listing, $event.target.value)"
+              >
+                <option value="">Sem usuário atribuído</option>
+                <option
+                  v-for="person in users"
+                  :key="person.id"
+                  :value="person.id"
+                >
+                  {{ person.name }} · {{ person.email }}
+                </option>
+              </select>
+            </label>
+            <button
+              type="button"
+              class="delete-listing-button"
+              @click="deleteListing(listing)"
+            >
+              Excluir card e notificar usuário
+            </button>
+          </article>
+        </div>
+        <p v-else class="empty-listings">Nenhum anúncio publicado ainda.</p>
+      </section>
+
+      <section id="users" v-if="!loading" class="users-section">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">Gestão de usuários</span>
+            <h2>Usuários cadastrados</h2>
+            <p>Veja quantos cards estão atribuídos a cada usuário.</p>
+          </div>
+        </div>
+        <div v-if="users.length" class="users-grid">
+          <article v-for="person in users" :key="person.id" class="user-card">
+            <div class="user-card-avatar">
+              {{ person.name.charAt(0).toUpperCase() }}
+            </div>
+            <div>
+              <h3>{{ person.name }}</h3>
+              <p>{{ person.email }}</p>
+              <strong
+                >{{ assignedCount(person.id) }} card(s) atribuído(s)</strong
+              >
+            </div>
+          </article>
+        </div>
+        <p v-else class="empty-listings">Nenhum usuário cadastrado ainda.</p>
+      </section>
+
+      <section class="admin-section">
+        <div>
+          <h2>Regras administrativas</h2>
+          <p>
+            Somente usuários com `is_admin` podem acessar os dados financeiros e
+            relatórios.
+          </p>
+        </div>
+        <RouterLink to="/plans" class="secondary-link">Ver planos</RouterLink>
+      </section>
+    </main>
+  </div>
 </template>
 
 <script setup>
@@ -344,10 +370,97 @@
 </script>
 
 <style scoped>
+  .admin-shell {
+    min-height: 100vh;
+    padding-top: 68px;
+    padding-left: 220px;
+    background: #f4fbf5;
+  }
+
+  .admin-navbar {
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: flex;
+    height: 68px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    border-bottom: 1px solid #dce8df;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(14px);
+  }
+
+  .admin-brand {
+    color: #18352a;
+    font-size: 1.15rem;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .admin-navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: #64766b;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .back-link {
+    color: #16804b;
+    text-decoration: none;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    z-index: 9;
+    top: 68px;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    width: 220px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px 14px;
+    border-right: 1px solid #dce8df;
+    background: #fff;
+  }
+
+  .sidebar-label {
+    margin: 8px 10px 4px;
+    color: #8a9a90;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .secondary-label {
+    margin-top: 24px;
+  }
+
+  .sidebar-link {
+    padding: 11px 12px;
+    border-radius: 8px;
+    color: #365344;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .sidebar-link:hover,
+  .sidebar-link.router-link-active {
+    background: #eaf7ee;
+    color: #16804b;
+  }
+
   .admin-page {
     max-width: 1180px;
     margin: 0 auto;
-    padding: 48px 24px;
+    padding: 36px 28px 56px;
     color: #172b22;
   }
   .admin-header {
@@ -593,6 +706,32 @@
     color: #9a4520;
   }
   @media (max-width: 820px) {
+    .admin-shell {
+      padding-left: 0;
+    }
+
+    .admin-sidebar {
+      position: static;
+      width: auto;
+      height: auto;
+      flex-direction: row;
+      align-items: center;
+      overflow-x: auto;
+      padding: 10px 14px;
+      border-right: 0;
+      border-bottom: 1px solid #dce8df;
+    }
+
+    .sidebar-label,
+    .secondary-label {
+      display: none;
+    }
+
+    .sidebar-link {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
     .metric-grid {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -610,6 +749,18 @@
     }
   }
   @media (max-width: 480px) {
+    .admin-navbar {
+      padding: 0 16px;
+    }
+
+    .admin-navbar-actions > span {
+      display: none;
+    }
+
+    .admin-page {
+      padding: 24px 16px 40px;
+    }
+
     .metric-grid {
       grid-template-columns: 1fr;
     }
