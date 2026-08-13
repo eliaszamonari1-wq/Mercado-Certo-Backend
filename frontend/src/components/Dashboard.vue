@@ -132,7 +132,12 @@
             <span v-if="filteredProducts.length" class="product-count">
               {{ filteredProducts.length }} produtos
             </span>
-            <button type="button" class="link-button" @click="openProductForm">
+            <button
+              v-if="isLoggedIn"
+              type="button"
+              class="link-button"
+              @click="openProductForm"
+            >
               ➕ Adicionar produto
             </button>
             <button
@@ -284,6 +289,7 @@
                 </button>
                 <button
                   class="btn-buy"
+                  v-if="!isOwnedByCurrentUser(product)"
                   @click.stop="handleBuy(product)"
                   :disabled="product.stock_quantity === 0 || product.isSold"
                 >
@@ -856,6 +862,11 @@
   }
 
   const openProductForm = () => {
+    if (!isLoggedIn.value) {
+      openDrawer('login')
+      showToast('Entre para publicar um card.', 'info')
+      return
+    }
     editingProduct.value = null
     showProductForm.value = true
   }
@@ -1139,6 +1150,15 @@
 
   // Product preview
   const handleBuy = (product) => {
+    if (!isLoggedIn.value) {
+      openDrawer('login')
+      showToast('Entre para comprar este card.', 'info')
+      return
+    }
+    if (isOwnedByCurrentUser(product)) {
+      showToast('Este card pertence à sua conta.', 'info')
+      return
+    }
     if (product.stock_quantity === 0) {
       showToast('Produto esgotado!', 'error')
       return
@@ -1151,6 +1171,16 @@
   }
 
   const addToCart = (product) => {
+    if (!isLoggedIn.value) {
+      closePreview()
+      openDrawer('login')
+      showToast('Entre para comprar este card.', 'info')
+      return
+    }
+    if (isOwnedByCurrentUser(product)) {
+      showToast('Você não pode comprar o próprio card.', 'info')
+      return
+    }
     if (product.stock_quantity === 0) {
       showToast('Produto esgotado!', 'error')
       return
@@ -3053,6 +3083,26 @@
       padding: 12px 12px 24px;
     }
 
+    .product-actions {
+      width: 100%;
+      align-items: stretch;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .product-actions .link-button {
+      flex: 1 1 auto;
+      min-height: 40px;
+      padding: 9px 10px;
+      background: #f5fbf7;
+      border: 1px solid #dce8df;
+    }
+
+    .product-actions .product-count {
+      flex: 1 0 100%;
+      text-align: center;
+    }
+
     .profile-summary {
       grid-template-columns: 1fr;
     }
@@ -3085,8 +3135,8 @@
 
   @media (max-width: 480px) {
     .product-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: 1fr;
+      gap: 12px;
     }
 
     .product-card {
@@ -3103,6 +3153,8 @@
 
     .btn-buy,
     .btn-secondary {
+      flex: 1 1 100%;
+      min-height: 38px;
       font-size: 11px;
       padding: 6px 12px;
     }
