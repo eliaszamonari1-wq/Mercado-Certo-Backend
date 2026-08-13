@@ -86,6 +86,23 @@
       </div>
     </header>
 
+    <section v-if="notifications.length" class="notifications-panel">
+      <div class="notifications-heading">
+        <strong>🔔 Notificações</strong>
+        <button type="button" @click="clearNotifications">
+          Marcar como lidas
+        </button>
+      </div>
+      <article
+        v-for="notification in notifications"
+        :key="notification.id"
+        class="notification-item"
+      >
+        <strong>{{ notification.title }}</strong>
+        <p>{{ notification.message }}</p>
+      </article>
+    </section>
+
     <!-- === HERO BANNER === -->
     <section class="hero-banner">
       <div class="hero-copy">
@@ -638,6 +655,8 @@
     doc,
     getDoc,
     getDocs,
+    query,
+    where,
     updateDoc,
   } from 'firebase/firestore'
   import { useRouter } from 'vue-router'
@@ -657,6 +676,7 @@
   const selectedCategory = ref('all')
   const productsLoading = ref(false)
   const productsError = ref(null)
+  const notifications = ref([])
   const lastUpdated = ref(null)
   let refreshTimer = null
   let searchTimeout = null
@@ -1278,6 +1298,37 @@
     clearTimeout(toastTimeout.value)
   }
 
+  const loadNotifications = async () => {
+    const userId = auth.currentUser?.uid || currentUserId.value
+    if (!userId) return
+
+    try {
+      const snapshot = await getDocs(
+        query(
+          collection(db, 'notifications'),
+          where('recipientId', '==', userId),
+        ),
+      )
+      notifications.value = snapshot.docs
+        .map((item) => ({ id: item.id, ...item.data() }))
+        .filter((item) => item.read !== true)
+        .sort((a, b) =>
+          String(b.createdAt || '').localeCompare(String(a.createdAt || '')),
+        )
+    } catch (error) {
+      console.warn('Não foi possível carregar notificações:', error.message)
+    }
+  }
+
+  const clearNotifications = async () => {
+    await Promise.all(
+      notifications.value.map((notification) =>
+        updateDoc(doc(db, 'notifications', notification.id), { read: true }),
+      ),
+    )
+    notifications.value = []
+  }
+
   // Lifecycle
   onMounted(async () => {
     // Probe candidate backends and set the working baseURL
@@ -1301,6 +1352,7 @@
 
     if (authenticated) {
       await refreshProfile()
+      await loadNotifications()
     } else {
       loadingProfile.value = false
     }
@@ -1865,6 +1917,44 @@
   }
 
   /* === HERO BANNER === */
+  .notifications-panel {
+    width: min(1180px, calc(100% - 40px));
+    margin: 18px auto 0;
+    padding: 16px;
+    border: 1px solid #f2d19d;
+    border-radius: 12px;
+    background: #fff9ed;
+    color: #6f4b1e;
+  }
+
+  .notifications-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .notifications-heading button {
+    border: 0;
+    background: transparent;
+    color: #8c5b1f;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .notification-item {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f2d19d;
+  }
+
+  .notification-item p {
+    margin: 4px 0 0;
+    line-height: 1.45;
+  }
+
   .hero-banner {
     max-width: 1200px;
     margin: 16px auto 0;

@@ -9,8 +9,9 @@ import {
   signInWithPopup,
   signOut,
 } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
 import { computed, ref } from 'vue'
-import { auth } from '../firebase.js'
+import { auth, db } from '../firebase.js'
 
 const user = ref(null)
 const loading = ref(false)
@@ -47,6 +48,19 @@ function persistSession(firebaseUser) {
   localStorage.setItem('user', JSON.stringify(userData))
   user.value = userData
   return userData
+}
+
+async function syncUserProfile(firebaseUser) {
+  await setDoc(
+    doc(db, 'users', firebaseUser.uid),
+    {
+      name:
+        firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+      email: firebaseUser.email,
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true },
+  )
 }
 
 export function useAuth() {
@@ -88,6 +102,7 @@ export function useAuth() {
       )
 
       persistSession(firebaseResult.user)
+      await syncUserProfile(firebaseResult.user)
       return { user: user.value, token: firebaseResult.user.accessToken }
     } catch (err) {
       const message = getAuthErrorMessage(err, 'Erro ao fazer login')
@@ -118,6 +133,7 @@ export function useAuth() {
       }
 
       persistSession(firebaseResult.user)
+      await syncUserProfile(firebaseResult.user)
       return { user: user.value, token: firebaseResult.user.accessToken }
     } catch (err) {
       const message = err.message || 'Erro ao registrar'
@@ -137,6 +153,7 @@ export function useAuth() {
       const provider = new GoogleAuthProvider()
       const firebaseResult = await signInWithPopup(auth, provider)
       persistSession(firebaseResult.user)
+      await syncUserProfile(firebaseResult.user)
       return { user: user.value, token: firebaseResult.user.accessToken }
     } catch (err) {
       const message = err.message || 'Erro ao fazer login com Google'
