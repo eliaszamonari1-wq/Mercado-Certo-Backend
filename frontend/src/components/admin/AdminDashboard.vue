@@ -3,7 +3,7 @@
     <header class="admin-navbar">
       <RouterLink to="/dashboard" class="admin-brand">Mercado Certo</RouterLink>
       <div class="admin-navbar-actions">
-        <span>Administração</span>
+        <span class="admin-current-section">{{ activeSection }}</span>
         <RouterLink to="/dashboard" class="back-link"
           >Voltar ao site</RouterLink
         >
@@ -245,7 +245,7 @@
     updateDoc,
     writeBatch,
   } from 'firebase/firestore'
-  import { computed, onMounted, ref } from 'vue'
+  import { computed, onMounted, onUnmounted, ref } from 'vue'
   import { db } from '../../firebase.js'
 
   const dashboard = ref({})
@@ -254,6 +254,15 @@
   const loading = ref(true)
   const error = ref('')
   const listingMonthlyFee = 100
+  const activeSection = ref('Visão geral')
+
+  const sectionLabels = {
+    overview: 'Visão geral',
+    listings: 'Anúncios e cobrança',
+    users: 'Usuários',
+    operations: 'Operações',
+    'settings-panel': 'Configurações',
+  }
 
   const listingMonthlyTotal = computed(
     () => listings.value.length * listingMonthlyFee,
@@ -263,6 +272,11 @@
     return Number(value || 0)
       .toFixed(2)
       .replace('.', ',')
+  }
+
+  function syncActiveSection() {
+    const key = window.location.hash.replace('#', '') || 'overview'
+    activeSection.value = sectionLabels[key] || 'Visão geral'
   }
 
   async function loadDashboard() {
@@ -417,7 +431,15 @@
     }
   }
 
-  onMounted(loadDashboard)
+  onMounted(() => {
+    syncActiveSection()
+    window.addEventListener('hashchange', syncActiveSection)
+    loadDashboard()
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('hashchange', syncActiveSection)
+  })
 </script>
 
 <style scoped>
@@ -458,6 +480,12 @@
     color: #64766b;
     font-size: 0.85rem;
     font-weight: 700;
+  }
+
+  .admin-current-section {
+    color: #16804b;
+    font-size: 0.82rem;
+    font-weight: 800;
   }
 
   .back-link {
