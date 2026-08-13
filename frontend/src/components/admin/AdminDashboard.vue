@@ -679,10 +679,11 @@
   }
   .users-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
     gap: 16px;
   }
   .user-card {
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -690,6 +691,9 @@
     border: 1px solid #dce8df;
     border-radius: 8px;
     background: #fff;
+  }
+  .user-card > div:last-child {
+    min-width: 0;
   }
   .user-card-avatar {
     display: grid;
@@ -706,15 +710,18 @@
   .user-card h3 {
     margin: 0 0 3px;
     color: #18352a;
+    overflow-wrap: anywhere;
   }
   .user-card p {
     margin: 0 0 6px;
     color: #64766b;
     font-size: 0.88rem;
+    overflow-wrap: anywhere;
   }
   .user-card strong {
     color: #16804b;
     font-size: 0.82rem;
+    overflow-wrap: anywhere;
   }
   .admin-section h2 {
     margin: 0 0 8px;
