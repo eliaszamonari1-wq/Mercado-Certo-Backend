@@ -146,9 +146,10 @@
 </template>
 
 <script setup>
+  import { collection, getDocs, query, where } from 'firebase/firestore'
   import { ref, computed, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
-  import api from '../../utils/api.js'
+  import { auth, db } from '../../firebase.js'
 
   const router = useRouter()
   const activeTab = ref('active')
@@ -171,13 +172,29 @@
 
   const loadData = async () => {
     try {
-      const [listingsRes, summaryRes] = await Promise.all([
-        api.get('/listings/seller/my-listings'),
-        api.get('/billing/summary'),
-      ])
+      const ownerId = auth.currentUser?.uid
+      if (!ownerId) {
+        listings.value = []
+        financialSummary.value = {}
+        return
+      }
 
-      listings.value = listingsRes.data.listings
-      financialSummary.value = summaryRes.data
+      const productsSnapshot = await getDocs(
+        query(collection(db, 'products'), where('ownerId', '==', ownerId)),
+      )
+
+      listings.value = productsSnapshot.docs.map((item) => {
+        const product = item.data()
+        return {
+          id: item.id,
+          ...product,
+          title: product.title || product.name || 'Anúncio sem título',
+          status: product.status || (product.isSold ? 'inactive' : 'active'),
+          price: Number(product.price || 0),
+          views_count: Number(product.views_count || 0),
+          contacts_count: Number(product.contacts_count || 0),
+        }
+      })
 
       // Calcular stats
       stats.value = {
@@ -194,8 +211,14 @@
           0,
         ),
       }
+      financialSummary.value = {
+        current_active_cost: stats.value.active_listings * 100,
+        pending_payment: null,
+      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
+      listings.value = []
+      financialSummary.value = {}
     }
   }
 
@@ -501,5 +524,77 @@
 
   .btn-sm:hover {
     background: #e0e0e0;
+  }
+
+  @media (max-width: 600px) {
+    .seller-dashboard {
+      padding: 16px 12px 28px;
+    }
+
+    .dashboard-header h1 {
+      font-size: 24px;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat-card {
+      padding: 14px;
+    }
+
+    .stat-card h3 {
+      font-size: 13px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+    }
+
+    .section-header {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-header .btn {
+      width: 100%;
+    }
+
+    .listings-tabs {
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .listing-item {
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .listing-thumb {
+      width: 72px;
+      height: 72px;
+    }
+
+    .listing-info {
+      min-width: 0;
+      flex: 1 1 calc(100% - 84px);
+    }
+
+    .listing-info h4 {
+      overflow-wrap: anywhere;
+    }
+
+    .listing-actions {
+      width: 100%;
+    }
+
+    .listing-actions .btn-sm {
+      flex: 1;
+      min-height: 38px;
+    }
   }
 </style>
