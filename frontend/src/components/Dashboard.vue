@@ -655,6 +655,7 @@
     doc,
     getDoc,
     getDocs,
+    onSnapshot,
     query,
     where,
     updateDoc,
@@ -680,6 +681,7 @@
   const lastUpdated = ref(null)
   let refreshTimer = null
   let searchTimeout = null
+  let notificationsUnsubscribe = null
 
   // Categorias
   const categories = ref([
@@ -1320,6 +1322,29 @@
     }
   }
 
+  const subscribeToNotifications = () => {
+    const userId = auth.currentUser?.uid || currentUserId.value
+    if (!userId) return
+
+    notificationsUnsubscribe?.()
+    notificationsUnsubscribe = onSnapshot(
+      query(
+        collection(db, 'notifications'),
+        where('recipientId', '==', userId),
+      ),
+      (snapshot) => {
+        notifications.value = snapshot.docs
+          .map((item) => ({ id: item.id, ...item.data() }))
+          .filter((item) => item.read !== true)
+          .sort((a, b) =>
+            String(b.createdAt || '').localeCompare(String(a.createdAt || '')),
+          )
+      },
+      (error) =>
+        console.warn('Não foi possível observar notificações:', error.message),
+    )
+  }
+
   const clearNotifications = async () => {
     await Promise.all(
       notifications.value.map((notification) =>
@@ -1353,6 +1378,7 @@
     if (authenticated) {
       await refreshProfile()
       await loadNotifications()
+      subscribeToNotifications()
     } else {
       loadingProfile.value = false
     }
@@ -1363,6 +1389,7 @@
   })
 
   onBeforeUnmount(() => {
+    notificationsUnsubscribe?.()
     if (refreshTimer) {
       window.clearInterval(refreshTimer)
     }

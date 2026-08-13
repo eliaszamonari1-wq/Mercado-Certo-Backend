@@ -129,6 +129,23 @@
         { merge: true },
       )
 
+      if (otherUser.value.id && otherUser.value.id !== currentUserId.value) {
+        await addDoc(collection(db, 'notifications'), {
+          recipientId: otherUser.value.id,
+          recipientEmail: null,
+          senderId: currentUserId.value,
+          senderName: currentUserName.value,
+          conversationId: conversationId.value,
+          type: 'new_chat_message',
+          title: 'Nova mensagem no chat',
+          message: `${currentUserName.value} enviou uma mensagem sobre "${listing.value?.title || 'um produto'}".`,
+          listingId: listing.value?.id || String(route.query.listing_id || ''),
+          listingName: listing.value?.title || 'Produto',
+          read: false,
+          createdAt: new Date().toISOString(),
+        })
+      }
+
       messageContent.value = ''
     } catch (error) {
       errorMessage.value = 'Não foi possível enviar a mensagem.'
