@@ -7,3 +7,7 @@ build/
 # Local secrets
 frontend/.env.local
 backend/google_client_secret.json
+backend/data/
+.firebase/
+.cspell/
+.vscode/

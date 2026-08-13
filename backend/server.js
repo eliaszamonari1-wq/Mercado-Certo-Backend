@@ -3,7 +3,12 @@ import dotenv from 'dotenv'
 import express from 'express'
 import http from 'http'
 import { Server as SocketServer } from 'socket.io'
+import adminRoutes from './src/routes/adminRoutes.js'
 import authRoutes from './src/routes/authRoutes.js'
+import billingRoutes from './src/routes/billingRoutes.js'
+import chatRoutes from './src/routes/chatRoutes.js'
+import externalLinkRoutes from './src/routes/externalLinkRoutes.js'
+import listingRoutes from './src/routes/listingRoutes.js'
 import productRoutes from './src/routes/productRoutes.js'
 
 dotenv.config()
@@ -19,24 +24,12 @@ const app = express()
 const port = process.env.PORT || 3333
 const httpServer = http.createServer(app)
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'https://betastore-18b12.firebaseapp.com',
-  'https://betastore-18b12.web.app',
-]
-
-// Simplified CORS options: reflect request origin and allow credentials.
-// This ensures preflight (OPTIONS) requests receive the proper headers
-// when the app is hosted behind proxies (e.g., Render).
 const corsOptions = {
-  origin: true, // reflect the request origin
+  origin: '*',
   methods: ['GET', 'HEAD', 'OPTIONS', 'PUT', 'PATCH', 'POST', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Range', 'X-Total-Count'],
-  credentials: true,
+  credentials: false,
   optionsSuccessStatus: 200,
 }
 
@@ -55,19 +48,17 @@ app.use((req, res, next) => {
 // Rotas
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
+app.use('/api/listings', listingRoutes)
+app.use('/api/billing', billingRoutes)
+app.use('/api/chat', chatRoutes)
+app.use('/api/external-links', externalLinkRoutes)
+app.use('/api/admin', adminRoutes)
 
 const io = new SocketServer(httpServer, {
   cors: {
-    origin: [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      'https://betastore-18b12.firebaseapp.com',
-      'https://betastore-18b12.web.app',
-    ],
+    origin: '*',
     methods: ['GET', 'POST'],
-    credentials: true,
+    credentials: false,
   },
 })
 
@@ -155,6 +146,9 @@ httpServer.listen(port, () => {
   console.log(`   POST /api/auth/login`)
   console.log(`   GET  /api/auth/me (protegido)`)
   console.log(`   GET  /api/products`)
+  console.log(`   GET  /api/listings/search`)
+  console.log(`   GET  /api/billing/summary`)
+  console.log(`   GET  /api/admin/dashboard (admin)`)
   console.log(`   GET  /health`)
   console.log('='.repeat(50))
 })
