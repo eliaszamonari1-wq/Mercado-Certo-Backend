@@ -37,6 +37,15 @@
         </div>
 
         <div class="navbar-right">
+          <button
+            v-if="isLoggedIn"
+            type="button"
+            class="cart-button"
+            @click="showCart = true"
+          >
+            🛒 Carrinho
+            <span v-if="cartCount" class="cart-count">{{ cartCount }}</span>
+          </button>
           <nav class="app-nav" aria-label="Navegação principal">
             <RouterLink to="/plans" class="app-nav-link">Planos</RouterLink>
             <RouterLink v-if="isLoggedIn" to="/seller" class="app-nav-link">
@@ -85,6 +94,59 @@
         </div>
       </div>
     </header>
+
+    <Transition name="fade">
+      <div
+        v-if="showCart"
+        class="drawer-backdrop"
+        @click.self="showCart = false"
+      >
+        <aside
+          class="cart-drawer"
+          role="dialog"
+          aria-label="Carrinho de compras"
+        >
+          <button type="button" class="drawer-close" @click="showCart = false">
+            ✕
+          </button>
+          <div class="cart-header">
+            <h2>🛒 Seu carrinho</h2>
+            <p>Compra de teste, sem cobrança online.</p>
+          </div>
+          <div v-if="cartItems.length" class="cart-items">
+            <article v-for="item in cartItems" :key="item.id" class="cart-item">
+              <div>
+                <strong>{{ item.name }}</strong>
+                <span>R$ {{ formatCurrency(item.price) }}</span>
+              </div>
+              <div class="cart-item-controls">
+                <button type="button" @click="changeCartQuantity(item, -1)">
+                  −
+                </button>
+                <span>{{ item.quantity }}</span>
+                <button type="button" @click="changeCartQuantity(item, 1)">
+                  +
+                </button>
+                <button
+                  type="button"
+                  class="cart-remove"
+                  @click="removeFromCart(item.id)"
+                >
+                  Excluir
+                </button>
+              </div>
+            </article>
+          </div>
+          <p v-else class="cart-empty">Seu carrinho está vazio.</p>
+          <div v-if="cartItems.length" class="cart-summary">
+            <strong>Total: R$ {{ formatCurrency(cartTotal) }}</strong>
+            <button type="button" class="btn-buy" @click="checkoutCart">
+              Finalizar compra de teste
+            </button>
+          </div>
+        </aside>
+      </div>
+    </Transition>
 
     <section v-if="notifications.length" class="notifications-panel">
       <div class="notifications-heading">
@@ -652,6 +714,8 @@
   const productsLoading = ref(false)
   const productsError = ref(null)
   const notifications = ref([])
+  const cartItems = ref([])
+  const showCart = ref(false)
   const lastUpdated = ref(null)
   let refreshTimer = null
   let searchTimeout = null
@@ -690,6 +754,15 @@
 
   const currentUserId = computed(() => user.value?.id || null)
   const currentUserOnline = computed(() => !!user.value)
+  const cartCount = computed(() =>
+    cartItems.value.reduce((total, item) => total + item.quantity, 0),
+  )
+  const cartTotal = computed(() =>
+    cartItems.value.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0,
+    ),
+  )
 
   // Computed
   const isLoggedIn = computed(() => !!user.value)
@@ -1172,7 +1245,7 @@
     selectedProduct.value = null
   }
 
-  const addToCart = async (product) => {
+  const addToCart = (product) => {
     if (!isLoggedIn.value) {
       closePreview()
       openDrawer('login')
@@ -1188,59 +1261,82 @@
       return
     }
 
-    const sellerId =
-      product.ownerId ||
-      product.owner_id ||
-      product.createdBy ||
-      product.seller_id
-
-    if (!sellerId) {
-      showToast('Este anúncio ainda não tem vendedor atribuído.', 'warning')
-      return
-    }
-
-    try {
-      const participantIds = [auth.currentUser.uid, sellerId].sort()
-      const conversationId = `${product.id}_${participantIds.join('_')}`
-
-      await setDoc(
-        doc(db, 'conversations', conversationId),
-        {
-          listingId: product.id,
-          participantIds,
-          listingTitle: product.name,
-          listingCategory: product.category || null,
-          listingPrice: Number(product.price || 0),
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
+    const existing = cartItems.value.find((item) => item.id === product.id)
+    if (existing) {
+      existing.quantity = Math.min(
+        existing.quantity + 1,
+        product.stock_quantity,
       )
-
-      await addDoc(collection(db, 'notifications'), {
-        recipientId: sellerId,
-        recipientEmail: product.ownerEmail || null,
-        senderId: auth.currentUser.uid,
-        senderName:
-          auth.currentUser.displayName || auth.currentUser.email || 'Comprador',
-        conversationId,
-        type: 'purchase_request',
-        title: 'Nova solicitação de compra',
-        message: `Um comprador quer comprar "${product.name}". Esta é uma solicitação de teste, sem cobrança online.`,
-        listingId: product.id,
-        listingName: product.name,
-        read: false,
-        createdAt: new Date().toISOString(),
+    } else {
+      cartItems.value.push({
+        ...product,
+        price: Number(product.price || 0),
+        quantity: 1,
       })
+    }
+    showCart.value = true
+    showToast(`${product.name} foi adicionado ao carrinho.`, 'success')
+    closePreview()
+  }
 
+  const changeCartQuantity = (item, amount) => {
+    item.quantity = Math.max(
+      1,
+      Math.min(item.quantity + amount, item.stock_quantity || 1),
+    )
+  }
+
+  const removeFromCart = (productId) => {
+    cartItems.value = cartItems.value.filter((item) => item.id !== productId)
+  }
+
+  const checkoutCart = async () => {
+    try {
+      for (const item of cartItems.value) {
+        const sellerId =
+          item.ownerId || item.owner_id || item.createdBy || item.seller_id
+        if (!sellerId) continue
+        const participantIds = [auth.currentUser.uid, sellerId].sort()
+        const conversationId = `${item.id}_${participantIds.join('_')}`
+        await setDoc(
+          doc(db, 'conversations', conversationId),
+          {
+            listingId: item.id,
+            participantIds,
+            listingTitle: item.name,
+            listingPrice: item.price,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true },
+        )
+        await addDoc(collection(db, 'notifications'), {
+          recipientId: sellerId,
+          recipientEmail: item.ownerEmail || null,
+          senderId: auth.currentUser.uid,
+          senderName:
+            auth.currentUser.displayName ||
+            auth.currentUser.email ||
+            'Comprador',
+          conversationId,
+          type: 'purchase_request',
+          title: 'Nova solicitação de compra',
+          message: `Compra de teste de ${item.quantity} unidade(s) de "${item.name}". Sem cobrança online.`,
+          listingId: item.id,
+          listingName: item.name,
+          read: false,
+          createdAt: new Date().toISOString(),
+        })
+      }
+      cartItems.value = []
+      showCart.value = false
       showToast(
-        'Solicitação de compra enviada! O vendedor foi notificado.',
+        'Compra de teste finalizada! Os vendedores foram notificados.',
         'success',
       )
     } catch (error) {
-      console.error('Erro ao enviar solicitação de compra:', error)
-      showToast('Não foi possível enviar a solicitação de compra.', 'error')
+      console.error('Erro ao finalizar carrinho:', error)
+      showToast('Não foi possível finalizar a compra de teste.', 'error')
     }
-    closePreview()
   }
 
   const toggleColorSelection = (productId, color) => {
@@ -1719,6 +1815,113 @@
     height: min(720px, calc(100dvh - 32px));
     max-height: calc(100dvh - 32px);
     padding: 12px;
+  }
+
+  .cart-button {
+    position: relative;
+    padding: 8px 12px;
+    border: 1px solid #c9dbcf;
+    border-radius: 8px;
+    background: #fff;
+    color: #14532d;
+    cursor: pointer;
+    font-weight: 800;
+  }
+
+  .cart-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: grid;
+    width: 21px;
+    height: 21px;
+    place-items: center;
+    border-radius: 50%;
+    background: #dc2626;
+    color: #fff;
+    font-size: 11px;
+  }
+
+  .cart-drawer {
+    position: relative;
+    width: min(480px, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+    padding: 24px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.22);
+  }
+
+  .cart-header h2 {
+    margin: 0 0 5px;
+  }
+
+  .cart-header p {
+    margin: 0 0 18px;
+    color: #64766b;
+  }
+
+  .cart-items {
+    display: grid;
+    gap: 10px;
+  }
+
+  .cart-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #dce8df;
+    border-radius: 10px;
+  }
+
+  .cart-item > div:first-child {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .cart-item span {
+    color: #64766b;
+    font-size: 0.85rem;
+  }
+
+  .cart-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+  }
+
+  .cart-item-controls button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #c9dbcf;
+    border-radius: 6px;
+    background: #f7fbf8;
+    cursor: pointer;
+  }
+
+  .cart-item-controls .cart-remove {
+    width: auto;
+    padding: 0 7px;
+    color: #b42318;
+  }
+
+  .cart-summary {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #dce8df;
+  }
+
+  .cart-empty {
+    padding: 24px 0;
+    color: #64766b;
+    text-align: center;
   }
 
   .floating-chat :deep(.chat-container) {
@@ -3098,6 +3301,11 @@
       flex-shrink: 0;
     }
 
+    .cart-button {
+      padding: 7px 8px;
+      font-size: 12px;
+    }
+
     .brand-copy span {
       display: none;
     }
@@ -3223,6 +3431,26 @@
 
     .preview-actions .btn-buy {
       min-width: unset;
+    }
+
+    .cart-drawer {
+      width: 100vw;
+      max-height: 100dvh;
+      border-radius: 0;
+      padding: 20px 14px;
+    }
+
+    .cart-item {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .cart-item-controls {
+      width: 100%;
+    }
+
+    .cart-item-controls .cart-remove {
+      margin-left: auto;
     }
   }
 
