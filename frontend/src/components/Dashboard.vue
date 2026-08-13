@@ -97,6 +97,7 @@
         v-for="notification in notifications"
         :key="notification.id"
         class="notification-item"
+        @click="openNotification(notification)"
       >
         <strong>{{ notification.title }}</strong>
         <p>{{ notification.message }}</p>
@@ -1354,6 +1355,20 @@
     notifications.value = []
   }
 
+  const openNotification = (notification) => {
+    if (!notification.conversationId || !notification.senderId) return
+
+    router.push({
+      name: 'chat',
+      query: {
+        seller_id: notification.senderId,
+        listing_id: notification.listingId,
+        listing_title: notification.listingName,
+        seller_name: notification.senderName || 'usuário',
+      },
+    })
+  }
+
   // Lifecycle
   onMounted(async () => {
     // Probe candidate backends and set the working baseURL
@@ -1975,6 +1990,7 @@
     margin-top: 10px;
     padding-top: 10px;
     border-top: 1px solid #f2d19d;
+    cursor: pointer;
   }
 
   .notification-item p {
