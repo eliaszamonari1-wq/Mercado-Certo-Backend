@@ -13,7 +13,7 @@
       <p v-if="errorMessage" class="chat-error">{{ errorMessage }}</p>
     </div>
 
-    <div class="chat-messages">
+    <div ref="messagesContainer" class="chat-messages">
       <div
         v-for="msg in messages"
         :key="msg.id"
@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-  import { onMounted, onUnmounted, ref } from 'vue'
+  import { nextTick, onMounted, onUnmounted, ref } from 'vue'
   import { onAuthStateChanged } from 'firebase/auth'
   import { useRoute } from 'vue-router'
   import {
@@ -73,6 +73,7 @@
   const route = useRoute()
   const messageContent = ref('')
   const messages = ref([])
+  const messagesContainer = ref(null)
   const templates = ref([])
   const showTemplates = ref(false)
   const otherUser = ref({})
@@ -206,6 +207,12 @@
           id: message.id,
           ...message.data(),
         }))
+        nextTick(() => {
+          if (messagesContainer.value) {
+            messagesContainer.value.scrollTop =
+              messagesContainer.value.scrollHeight
+          }
+        })
       },
       (error) => {
         errorMessage.value = 'Não foi possível carregar as mensagens.'
